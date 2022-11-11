@@ -1,0 +1,7 @@
+frontend:
+add hash for password at frontend
+* react hook form
+
+
+backend:
+//nodemail instaed of sendgrid with handlebarjs
