@@ -1,13 +1,13 @@
 const User = require("../models/user_model");
 const asyncHandler = require("express-async-handler");
 const sendCookie = require("../utils/sendCookie");
+import { createHash } from "crypto";
 import { Request, Response, NextFunction } from "express";
 import { ValidationError } from "express-validator/src/base";
 import {
   Result,
   validationResult,
 } from "express-validator/src/validation-result";
-import { createHash } from "crypto";
 const sendEmail = require("../utils/sendEmail");
 
 interface IUserRequest extends Request {
@@ -47,7 +47,7 @@ exports.signupUser = asyncHandler(async (req: Request, res: Response) => {
 
 // Login User
 exports.loginUser = asyncHandler(async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+  const { username, password, otp } = req.body;
   const errors: Result<ValidationError> = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -70,7 +70,31 @@ exports.loginUser = asyncHandler(async (req: Request, res: Response) => {
       .json({ errors: [{ message: "Password doesn't match" }] });
   }
 
-  sendCookie(user, 201, res);
+  const generateOtp = await user.getOtp();
+console.log(generateOtp);
+  
+  await user.save();
+
+  // try {
+  //   await sendEmail({
+  //     email: user.email,
+  //     data: {
+  //       generateOtp,
+  //     },
+  //   });
+
+  //   res.status(200).json({
+  //     success: true,
+  //     message: `Email sent to ${user.email}`,
+  //   });
+  // } catch (error) {
+  //   user.otpToken = undefined;
+  //   user.otpExpiry = undefined;
+
+  //   await user.save({ validateBeforeSave: false });
+  //   return res.status(500).json({ errors: [{ message: error }] });
+  // }
+  res.status(200).send("Login First step done");
 });
 
 // Logout User
@@ -150,8 +174,8 @@ exports.forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   try {
     await sendEmail({
       email: user.email,
-      templateId: process.env.SENDGRID_RESET_TEMPLATEID,
       data: {
+        name: user.username,
         reset_url: resetPasswordUrl,
       },
     });
@@ -190,4 +214,41 @@ exports.resetPassword = asyncHandler(async (req: Request, res: Response) => {
 
   await user.save();
   sendCookie(user, 200, res);
+});
+
+exports.deleteProfile = asyncHandler(
+  async (req: IUserRequest, res: Response) => {
+    const user = await User.findOneAndDelete(req.user._id);
+
+    await user.remove();
+
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User Deleted",
+    });
+  }
+);
+
+exports.verifyOtp = asyncHandler(async (req: IUserRequest, res: Response) => {
+  const { otp, username } = req.body;
+
+  const errors: Result<ValidationError> = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
+  const user = await User.findOne({
+    $or: [{ email: username }, { username: username }],
+  }).select("+password");
+  const isOtpMatched = await user.compareOtp(otp);
+  if (!isOtpMatched) {
+    return res.status(401).json({ errors: [{ message: "Otp doesn't match" }] });
+  }
+
+  sendCookie(user, 201, res);
 });

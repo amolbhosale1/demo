@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken");
 import { Request, Response } from "express";
-const User = require("../models/user_model");
 
 interface IUserRequest extends Request {
   user: {
@@ -11,12 +10,10 @@ interface IUserRequest extends Request {
   };
 }
 
-
-
-exports.isAuthenticated = async (
+exports.isAuthenticated =( SchemaModel: any) => { return async (
   req: IUserRequest,
   res: Response,
-  next: any
+  next: any,
 ) => {
   const { token } = req.cookies;
 
@@ -27,17 +24,19 @@ exports.isAuthenticated = async (
   }
 
   const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-  req.user = await User.findById(decodedData.id);
+  req.user = await SchemaModel.findById(decodedData.id);
   next();
 };
+}
 
-exports.hasPermissionRole = (role: Array<string>, CheckRoleModel: any) => {
+exports.hasPermissionRole = (role: Array<string>, SchemaModel: any) => {
   return async (req: IUserRequest, res: Response, next: any) => {
-    const user = await User.findById(req.user._id).select("role");
+    const user = await SchemaModel.findById(req.user._id).select("role");
     const isTrue = (): boolean => {
       for (let i: number = 0; i < role.length; i++) {
-        for (let index: number = 0; index < user.role.length; index++) {          
-          if (role[i] === user.role[index]) {            
+        for (let index: number = 0; index < user.role.length; index++) {
+          // console.log(role[i]);
+          if (role[i] === user.role[index]) {
             return true;
           }
         }

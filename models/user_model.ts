@@ -1,5 +1,5 @@
 import { model, Schema, Document } from "mongoose";
-import { createHash, randomBytes } from "node:crypto";
+import { createDecipheriv, createHash, randomBytes, randomInt } from "node:crypto";
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
@@ -9,6 +9,8 @@ export interface UserDocument extends Document {
   password: string;
   resetPasswordToken: string;
   resetPasswordExpiry: Date;
+  otpToken: String;
+  otpExpiry: Date;
   isVerified: boolean;
   expires?: Date;
   role: String[];
@@ -40,6 +42,8 @@ const userSchema = new Schema<UserDocument>(
     },
     resetPasswordToken: { type: String },
     resetPasswordExpiry: { type: Date, default: Date.now },
+    otpToken: { type: String },
+    otpExpiry: { type: Date, default: Date.now },
     isVerified: {
       type: Boolean,
       required: true,
@@ -80,9 +84,23 @@ userSchema.methods.getResetPasswordToken = async function () {
   this.resetPasswordToken = createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.resetPasswordExpiry = Date.now() + 15 * 60 * 1000;
+  this.resetPasswordExpiry = Date.now() + 300000;
 
   return resetToken;
+};
+
+userSchema.methods.getOtp = async function () {
+  const otpToken = randomInt(1000, 9999).toString();
+
+  this.otpToken = await bcrypt.hash(otpToken, 12);
+  this.otpExpiry = Date.now() + 15 * 60 * 1000;
+
+  return otpToken;
+};
+
+userSchema.methods.compareOtp = async function (enteredOtp: String) {
+  
+  return await bcrypt.compare(enteredOtp, this.otpToken);
 };
 
 module.exports = model<UserDocument>("User", userSchema);

@@ -32,3 +32,12 @@ export const updatePasswordValidate: Array<ValidationChain> = [
 export const forgotPasswordValidate: Array<ValidationChain> = [
   check("email", "Enter Email").isEmail().not().isEmpty(),
 ];
+
+export const accessControlDelete: Array<ValidationChain> = [
+  check("id", "Enter id").not().isEmpty(),
+];
+
+export const verifyOtpValidate: Array<ValidationChain> = [
+  check("otp", "Enter otp").not().isEmpty(),
+  check("username", "Enter Name").not().isEmpty(),
+];

@@ -17,12 +17,12 @@ interface IUserRequest extends Request {
   };
 }
 
-const access_control = async() => {
+const access_control = async () => {
   // const ac: AccessControl = await new AccessControl(grantList);
   // console.log(ac.can('whatsapp_create').createAny('chat').granted);    // —> true
 };
 
-exports.signupUser = asyncHandler(async (req: Request, res: Response) => {
+exports.IamsignupUser = asyncHandler(async (req: Request, res: Response) => {
   const { email, username, password, role } = req.body;
   const errors: Result<ValidationError> = validationResult(req);
   if (!errors.isEmpty()) {
@@ -52,7 +52,7 @@ exports.signupUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Login User
-exports.loginUser = asyncHandler(async (req: Request, res: Response) => {
+exports.IamloginUser = asyncHandler(async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
   const errors: Result<ValidationError> = validationResult(req);
@@ -82,7 +82,7 @@ exports.loginUser = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Logout User
-exports.logoutUser = asyncHandler(
+exports.IamlogoutUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     res.cookie("token", null, {
       expires: new Date(Date.now()),
@@ -97,7 +97,7 @@ exports.logoutUser = asyncHandler(
 );
 
 //get me
-exports.getAccountDetails = asyncHandler(
+exports.IamgetAccountDetails = asyncHandler(
   async (req: IUserRequest, res: Response) => {
     const user = await AccessControlModel.findById(req.user._id);
 
@@ -108,19 +108,41 @@ exports.getAccountDetails = asyncHandler(
   }
 );
 
-//update paswd from admin panel only by admin
-exports.updatePassword = asyncHandler(
+exports.IamdeleteProfile = asyncHandler(
   async (req: IUserRequest, res: Response) => {
-    const { oldPassword, newPassword } = req.body;
+    const { id } = req.body;
+
+    const errors: Result<ValidationError> = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    const user = await AccessControlModel.findOneAndDelete(id);
+
+    await user.remove();
+
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "User Deleted",
+    });
+  }
+);
+
+//update paswd from admin panel only by admin
+exports.IamupdatePassword = asyncHandler(
+  async (req: IUserRequest, res: Response) => {
+    const { oldPassword, newPassword, _id } = req.body;
 
     const errors: Result<ValidationError> = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const user = await AccessControlModel.findById(req.user._id).select(
-      "+password"
-    );
+    const user = await AccessControlModel.findById(_id).select("+password");
 
     const isPasswordMatched = await user.comparePassword(oldPassword);
 
@@ -137,41 +159,43 @@ exports.updatePassword = asyncHandler(
 );
 
 //get all users
-exports.getAllUsers = asyncHandler(async (req: IUserRequest, res: Response) => {
-  const users = await AccessControlModel.find();
-
-  res.status(200).json({
-    success: true,
-    users,
-  });
-});
-
-//search users
-exports.searchUsers = asyncHandler(async (req: IUserRequest, res: Response) => {
-  if (req.query.keyword) {
-    const users = await AccessControlModel.find({
-      $or: [
-        {
-          username: {
-            $regex: req.query.keyword,
-            $options: "i",
-          },
-        },
-      ],
-    });
+exports.IamgetAllUsers = asyncHandler(
+  async (req: IUserRequest, res: Response) => {
+    const users = await AccessControlModel.find();
 
     res.status(200).json({
       success: true,
       users,
     });
   }
-});
+);
 
-exports.getUserDetailsById = asyncHandler(
+//search users
+exports.IamsearchUsers = asyncHandler(
+  async (req: IUserRequest, res: Response) => {
+    if (req.query.keyword) {
+      const users = await AccessControlModel.find({
+        $or: [
+          {
+            username: {
+              $regex: req.query.keyword,
+              $options: "i",
+            },
+          },
+        ],
+      });
+
+      res.status(200).json({
+        success: true,
+        users,
+      });
+    }
+  }
+);
+
+exports.IamgetUserDetailsById = asyncHandler(
   async (req: IUserRequest, res: Response) => {
     const user = await AccessControlModel.findById(req.params.id);
-console.log(user.role);
-
     res.status(200).json({
       success: true,
       user,
