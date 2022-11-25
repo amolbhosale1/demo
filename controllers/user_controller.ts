@@ -75,25 +75,26 @@ console.log(generateOtp);
   
   await user.save();
 
-  // try {
-  //   await sendEmail({
-  //     email: user.email,
-  //     data: {
-  //       generateOtp,
-  //     },
-  //   });
+  try {
+    await sendEmail({
+      email: user.email,
+      id:"otp",
+      data: {
+        otp:generateOtp,
+      },
+    });
 
-  //   res.status(200).json({
-  //     success: true,
-  //     message: `Email sent to ${user.email}`,
-  //   });
-  // } catch (error) {
-  //   user.otpToken = undefined;
-  //   user.otpExpiry = undefined;
+    res.status(200).json({
+      success: true,
+      message: `Email sent to ${user.email}`,
+    });
+  } catch (error) {
+    user.otpToken = undefined;
+    user.otpExpiry = undefined;
 
-  //   await user.save({ validateBeforeSave: false });
-  //   return res.status(500).json({ errors: [{ message: error }] });
-  // }
+    await user.save({ validateBeforeSave: false });
+    return res.status(500).json({ errors: [{ message: error }] });
+  }
   res.status(200).send("Login First step done");
 });
 
@@ -174,6 +175,7 @@ exports.forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   try {
     await sendEmail({
       email: user.email,
+      id:"forgotPass",
       data: {
         name: user.username,
         reset_url: resetPasswordUrl,

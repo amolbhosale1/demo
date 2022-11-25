@@ -25,7 +25,7 @@ var emailTemplateBody = {
   link:"https://postmarkapp.com/guides/password-reset-email-best-practices"
 }
 app.get("/", (req: Request, res: Response) => {
-  res.render('emailTemplate', {projects : emailTemplateBody});
+  res.render('otptemplate', {projects : emailTemplateBody});
 
 });
 app.use("/api/v1/auth/", require("./router/user_route"));

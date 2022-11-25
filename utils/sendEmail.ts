@@ -5,9 +5,11 @@ import path from "path";
 const handlebars = require("hbs");
 interface Ioptions {
   email: String;
+  id:string
   data: {
     reset_url: string
     name:string
+    otp:string
   };
 }
 
@@ -15,8 +17,14 @@ var source = fs.readFileSync(
   path.join(__dirname, "../", "views/emailTemplate.hbs"),
   "utf8"
 );
+var otpsource = fs.readFileSync(
+  path.join(__dirname, "../", "views/otpTemplate.hbs"),
+  "utf8"
+);
 // Create email generator
-var template = handlebars.compile(source);
+var emailtemplate = handlebars.compile(source);
+var otptemplate = handlebars.compile(otpsource);
+
 
 var transport = createTransport({
   host: "smtp.mailtrap.io",
@@ -29,15 +37,17 @@ var transport = createTransport({
 
 const sendEmail = async (options: Ioptions) => {
   let emailTemplateBody = {
+    id:options.id,
     name: options.data.name,
     link: options.data.reset_url,
+    otp:options.data.otp
   };
   var mailOptions = {
     from: '"Example Team" <from@example.com>',
     to: `${options.email}`,
     subject: "password reset",
     text: options.data.reset_url,
-    html: template({ projects: emailTemplateBody }),
+    html: emailTemplateBody.id==="forgotPass"?emailtemplate({ projects: emailTemplateBody }):otptemplate({ projects: emailTemplateBody }),
   };
   transport.sendMail(
     mailOptions,
