@@ -1,7 +1,7 @@
 const User = require("../models/user_model");
 const asyncHandler = require("express-async-handler");
 const sendCookie = require("../utils/sendCookie");
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { Request, Response, NextFunction } from "express";
 import { ValidationError } from "express-validator/src/base";
 import {
@@ -71,16 +71,16 @@ exports.loginUser = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const generateOtp = await user.getOtp();
-console.log(generateOtp);
-  
+  console.log(generateOtp);
+
   await user.save();
 
   try {
     await sendEmail({
       email: user.email,
-      id:"otp",
+      id: "otp",
       data: {
-        otp:generateOtp,
+        otp: generateOtp,
       },
     });
 
@@ -175,7 +175,7 @@ exports.forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   try {
     await sendEmail({
       email: user.email,
-      id:"forgotPass",
+      id: "forgotPass",
       data: {
         name: user.username,
         reset_url: resetPasswordUrl,
@@ -243,7 +243,7 @@ exports.verifyOtp = asyncHandler(async (req: IUserRequest, res: Response) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  
+
   const user = await User.findOne({
     $or: [{ email: username }, { username: username }],
   }).select("+password");

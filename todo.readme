@@ -4,4 +4,3 @@ add hash for password at frontend
 
 
 backend:
-//nodemail instaed of sendgrid with handlebarjs

@@ -18,6 +18,9 @@ const grantList:GrantList = {
    "userDelete": { role: 'user_delete', resource: 'user', action: 'delete:any' },
    "userUpdate": { role: 'user_update', resource: 'user', action: 'update:any' },
 
+   "liveCreate": { role: 'live_create', resource: 'chat', action: 'create:any', attributes: '*' },
+   "'liveRead":  { role: 'live_read', resource: 'chat', action: 'read:any', attributes: '*' },
+   "liveDelete": { role: 'live_delete', resource: 'chat', action: 'delete:any', attributes: '*' },
 
    "whatsappCreate": { role: 'whatsapp_create', resource: 'chat', action: 'create:any', attributes: '*' },
    "'whatsappRead":  { role: 'whatsapp_read', resource: 'chat', action: 'read:any', attributes: '*' },
