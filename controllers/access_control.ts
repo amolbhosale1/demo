@@ -1,4 +1,3 @@
-import { AccessControl } from "accesscontrol";
 import grantList from "../models/access_control_LIst";
 const asyncHandler = require("express-async-handler");
 const sendCookie = require("../utils/sendCookie");
